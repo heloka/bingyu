@@ -1,16 +1,18 @@
 using System.Threading;
 using System.Security.Cryptography;
 
-namespace Qiye;
+namespace Bingyu;
 
 public partial class App : Application
 {
     private Mutex? _mutex;
     private EventWaitHandle? _wake;
     private RegisteredWaitHandle? _wakeRegistration;
-    // Keep the original profile path and single-instance identity across the product rename.
-    // Existing cookies, custom icons and workspace settings then work without migration.
-    internal static string DataDirectory { get; private set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Qiye");
+    private const string ProductId = "Bingyu";
+    private const string LegacyProductId = "Qiye";
+    // Existing installations keep their cookies and settings in the legacy profile.
+    // Fresh installations use the current product name.
+    internal static string DataDirectory { get; private set; } = ResolveDefaultDataDirectory();
     internal static bool SmokeTest { get; private set; }
     internal static bool GeminiCheck { get; private set; }
     internal static string? SmokeOutput { get; private set; }
@@ -27,8 +29,10 @@ public partial class App : Application
         if (SmokeTest && smokeIndex + 1 < e.Args.Length) SmokeOutput = Path.GetFullPath(e.Args[smokeIndex + 1]);
         Directory.CreateDirectory(DataDirectory);
         var identity = Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(Environment.UserName + DataDirectory)))[..20];
-        _mutex = new Mutex(true, @"Local\Qiye." + identity, out _ownsMutex);
-        _wake = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\Qiye.Wake." + identity);
+        var instanceName = Path.GetFileName(Path.TrimEndingDirectorySeparator(DataDirectory))
+            .Equals(LegacyProductId, StringComparison.OrdinalIgnoreCase) ? LegacyProductId : ProductId;
+        _mutex = new Mutex(true, @"Local\" + instanceName + "." + identity, out _ownsMutex);
+        _wake = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\" + instanceName + ".Wake." + identity);
         if (!_ownsMutex) { _wake.Set(); Shutdown(); return; }
         var store = new StateStore(DataDirectory);
         var state = store.Load();
@@ -54,5 +58,13 @@ public partial class App : Application
     {
         try { File.AppendAllText(Path.Combine(DataDirectory, "errors.log"), $"{DateTimeOffset.Now:O} {exception}\n"); }
         catch (IOException) { }
+    }
+
+    private static string ResolveDefaultDataDirectory()
+    {
+        string root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        string current = Path.Combine(root, ProductId);
+        string legacy = Path.Combine(root, LegacyProductId);
+        return Directory.Exists(current) || !Directory.Exists(legacy) ? current : legacy;
     }
 }

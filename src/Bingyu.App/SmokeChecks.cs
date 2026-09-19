@@ -10,7 +10,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Automation;
 using Microsoft.Web.WebView2.Core;
 
-namespace Qiye;
+namespace Bingyu;
 
 // Runs only with --smoke-test and an isolated --data-dir. No third-party account is used.
 internal static class SmokeChecks
@@ -81,7 +81,7 @@ internal static class SmokeChecks
             {
                 window.SetLayout(1); window.OpenSite(site, true); first = window.Workspace.ActiveTab!;
                 await Wait(() => window.Views[first.Id].Ready, "WebView2 initialization");
-                await WaitScript(window.Views[first.Id], "document.title", "Qiye fixture");
+                await WaitScript(window.Views[first.Id], "document.title", "Bingyu fixture");
             });
             await Check("Website notifications are allowed without a prompt and saved", async () =>
             {
@@ -97,11 +97,11 @@ internal static class SmokeChecks
             {
                 Assert(first != null, "First tab was not created");
                 var a = window.Views[first!.Id];
-                await a.Browser!.ExecuteScriptAsync("document.cookie='qiyeShared=works; SameSite=Lax; path=/'; localStorage.setItem('shared','yes'); document.querySelector('input').value='first-only'");
+                await a.Browser!.ExecuteScriptAsync("document.cookie='bingyuShared=works; SameSite=Lax; path=/'; localStorage.setItem('shared','yes'); document.querySelector('input').value='first-only'");
                 window.SetLayout(2); window.Workspace.SelectSlot(1); window.OpenSite(site, true); second = window.Workspace.ActiveTab!;
                 await Wait(() => window.Views[second.Id].Ready, "Second browser initialization");
-                var b = window.Views[second.Id]; await WaitScript(b, "document.title", "Qiye fixture");
-                Assert((await b.Browser!.ExecuteScriptAsync("document.cookie")).Contains("qiyeShared=works"), "Cookie not shared");
+                var b = window.Views[second.Id]; await WaitScript(b, "document.title", "Bingyu fixture");
+                Assert((await b.Browser!.ExecuteScriptAsync("document.cookie")).Contains("bingyuShared=works"), "Cookie not shared");
                 Assert((await b.Browser.ExecuteScriptAsync("localStorage.getItem('shared')")) == "\"yes\"", "Storage not shared");
                 Assert((await b.Browser.ExecuteScriptAsync("document.querySelector('input').value")) == "\"\"", "DOM state leaked between tabs");
             });
@@ -213,7 +213,7 @@ internal static class SmokeChecks
             {
                 var a = window.Views[first!.Id];
                 await a.Browser!.ExecuteScriptAsync("window.popupResult=''; window.addEventListener('message', e=>window.popupResult=e.data); window.open('/popup','fixturePopup')");
-                await WaitScript(a, "window.popupResult", "qiyeShared=works");
+                await WaitScript(a, "window.popupResult", "bingyuShared=works");
             });
             await Check("Hide / show preserves initialized controls", async () =>
             {
@@ -373,7 +373,7 @@ internal static class SmokeChecks
                     while (!string.IsNullOrEmpty(await reader.ReadLineAsync())) { }
                     string html = popup
                         ? "<title>Fixture popup</title><script>window.opener.postMessage(document.cookie,'*'); setTimeout(()=>window.close(),200);</script>Popup fixture"
-                        : "<!doctype html><meta charset='utf-8'><title>Qiye fixture</title><style>body{font:20px system-ui;padding:50px;background:#f6f5f2;color:#272b2a}input{padding:14px;border:1px solid #bbb}</style><h1>Qiye integration fixture</h1><p>This local page tests independent DOM state and shared storage.</p><input aria-label='Independent page state'>";
+                        : "<!doctype html><meta charset='utf-8'><title>Bingyu fixture</title><style>body{font:20px system-ui;padding:50px;background:#f6f5f2;color:#272b2a}input{padding:14px;border:1px solid #bbb}</style><h1>Bingyu integration fixture</h1><p>This local page tests independent DOM state and shared storage.</p><input aria-label='Independent page state'>";
                     byte[] body = Encoding.UTF8.GetBytes(html);
                     byte[] header = Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {body.Length}\r\nConnection: close\r\n\r\n");
                     await stream.WriteAsync(header); await stream.WriteAsync(body);

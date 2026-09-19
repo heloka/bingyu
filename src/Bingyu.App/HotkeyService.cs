@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
 
-namespace Qiye;
+namespace Bingyu;
 
 internal sealed class HotkeyService(Window window, Action toggle) : IDisposable
 {

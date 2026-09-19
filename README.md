@@ -60,7 +60,7 @@
 
 ## 本地数据
 
-数据仍存于 `%LOCALAPPDATA%\Qiye\`，这是旧版栖页沿用的数据目录，改名后不会清除已有登录和配置：
+新安装的数据保存在 `%LOCALAPPDATA%\Bingyu\`。如果电脑上已有旧版数据目录 `%LOCALAPPDATA%\Qiye\`，并语会继续使用它，保留登录和配置：
 
 - `settings.json`：工具、网址、页面、分屏比例和偏好；保存失败会提示，并保留上一版 `.bak`。
 - `Icons\`：用户自定义的网站图标。
@@ -76,8 +76,8 @@
 使用 .NET 10 SDK，在此目录运行：
 
 ```powershell
-dotnet run --project tests/Qiye.Core.Tests -c Release
-dotnet run --project src/Qiye.App -c Release
+dotnet run --project tests/Bingyu.Core.Tests -c Release
+dotnet run --project src/Bingyu.App -c Release
 .\scripts\Test-Desktop.ps1
 .\scripts\Build.ps1
 ```
@@ -90,9 +90,9 @@ dotnet run --project src/Qiye.App -c Release
 
 ## 源码结构
 
-- `src/Qiye.Core/`：标签 / 分屏状态、网址校验、持久化。
-- `src/Qiye.App/`：WPF 界面、网页容器、登录弹窗、托盘、全局快捷键。
-- `tests/Qiye.Core.Tests/`：核心行为与随机序列测试。
+- `src/Bingyu.Core/`：标签 / 分屏状态、网址校验、持久化。
+- `src/Bingyu.App/`：WPF 界面、网页容器、登录弹窗、托盘、全局快捷键。
+- `tests/Bingyu.Core.Tests/`：核心行为与随机序列测试。
 - `scripts/`：构建、打包与桌面集成检查。
 
-当前版本：0.1.9，Windows x64。未包含自动更新、自动启动、云同步或代码签名。
+当前版本：0.1.10，Windows x64。未包含自动更新、自动启动、云同步或代码签名。

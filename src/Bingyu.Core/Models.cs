@@ -1,4 +1,4 @@
-namespace Qiye.Core;
+namespace Bingyu.Core;
 
 public sealed record SiteDefinition(string Id, string Name, string Url, string Mark, string Color, string Description)
 {

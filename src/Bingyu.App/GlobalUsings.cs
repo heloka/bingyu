@@ -7,7 +7,7 @@ global using System.Windows;
 global using System.Windows.Controls;
 global using System.Windows.Input;
 global using System.Windows.Media;
-global using Qiye.Core;
+global using Bingyu.Core;
 global using Application = System.Windows.Application;
 global using Button = System.Windows.Controls.Button;
 global using TextBox = System.Windows.Controls.TextBox;

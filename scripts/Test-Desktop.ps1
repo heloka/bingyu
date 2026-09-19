@@ -2,9 +2,9 @@ param([string]$Executable)
 $ErrorActionPreference = 'Stop'
 $taskRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 if (-not $Executable) {
-    dotnet build (Join-Path $taskRoot 'src\Qiye.App\Qiye.App.csproj') -c Release --verbosity minimal
+    dotnet build (Join-Path $taskRoot 'src\Bingyu.App\Bingyu.App.csproj') -c Release --verbosity minimal
     if ($LASTEXITCODE -ne 0) { throw 'Build failed.' }
-    $Executable = Join-Path $taskRoot 'src\Qiye.App\bin\Release\net10.0-windows\Bingyu.exe'
+    $Executable = Join-Path $taskRoot 'src\Bingyu.App\bin\Release\net10.0-windows\Bingyu.exe'
 }
 $taskRunId = [DateTime]::Now.ToString('yyyyMMdd-HHmmss')
 $taskReport = Join-Path $taskRoot ('artifacts\smoke-' + $taskRunId)

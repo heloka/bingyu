@@ -13,7 +13,7 @@ function New-RoundedPath([single]$x, [single]$y, [single]$width, [single]$height
 }
 
 $taskRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$taskAssetDirectory = Join-Path $taskRoot 'src\Qiye.App\Assets'
+$taskAssetDirectory = Join-Path $taskRoot 'src\Bingyu.App\Assets'
 [IO.Directory]::CreateDirectory($taskAssetDirectory) | Out-Null
 $taskImages = @()
 
@@ -89,7 +89,7 @@ foreach ($taskSize in @(16, 20, 24, 32, 40, 48, 64, 128, 256)) {
     $taskGraphics.Dispose(); $taskLarge.Dispose()
 }
 
-$taskFile = [IO.File]::Create((Join-Path $taskAssetDirectory 'Qiye.ico'))
+$taskFile = [IO.File]::Create((Join-Path $taskAssetDirectory 'Bingyu.ico'))
 $taskWriter = [IO.BinaryWriter]::new($taskFile)
 $taskWriter.Write([uint16]0); $taskWriter.Write([uint16]1); $taskWriter.Write([uint16]$taskImages.Count)
 $taskOffset = 6 + 16 * $taskImages.Count
@@ -102,4 +102,4 @@ foreach ($taskImage in $taskImages) {
 }
 foreach ($taskImage in $taskImages) { $taskWriter.Write([byte[]]$taskImage[1]) }
 $taskWriter.Dispose()
-Write-Output "Updated $taskAssetDirectory\Qiye.ico"
+Write-Output "Updated $taskAssetDirectory\Bingyu.ico"

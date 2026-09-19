@@ -5,7 +5,7 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 using Forms = System.Windows.Forms;
 
-namespace Qiye;
+namespace Bingyu;
 
 internal sealed class MainWindow : Window
 {
@@ -94,7 +94,7 @@ internal sealed class MainWindow : Window
 
     private static ImageSource LoadWindowIcon(double pixelSize)
     {
-        var uri = new Uri("pack://application:,,,/Assets/Qiye.ico");
+        var uri = new Uri("pack://application:,,,/Assets/Bingyu.ico");
         var frames = System.Windows.Media.Imaging.BitmapDecoder.Create(uri,
             System.Windows.Media.Imaging.BitmapCreateOptions.IgnoreColorProfile,
             System.Windows.Media.Imaging.BitmapCacheOption.OnLoad).Frames;
@@ -543,7 +543,7 @@ internal sealed class MainWindow : Window
     internal void RestoreWindow() { Show(); if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal; Activate(); Browsers.ShowPopups(); }
     private void CreateTray()
     {
-        var resource = Application.GetResourceStream(new Uri("pack://application:,,,/Assets/Qiye.ico"));
+        var resource = Application.GetResourceStream(new Uri("pack://application:,,,/Assets/Bingyu.ico"));
         using (resource.Stream) _trayIcon = new System.Drawing.Icon(resource.Stream);
         _tray = new Forms.NotifyIcon { Icon = _trayIcon, Text = "并语 · AI 多屏工作台", Visible = true };
         var menu = new Forms.ContextMenuStrip();

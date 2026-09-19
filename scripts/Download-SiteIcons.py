@@ -5,7 +5,7 @@ from urllib.request import Request, urlopen
 from time import sleep
 
 
-ASSETS = Path(__file__).resolve().parents[1] / "src" / "Qiye.App" / "Assets" / "Sites"
+ASSETS = Path(__file__).resolve().parents[1] / "src" / "Bingyu.App" / "Assets" / "Sites"
 SOURCES = {
     "chatgpt.ico": "https://cdn.oaistatic.com/assets/favicon-eex17e9e.ico",
     "claude.ico": "https://claude.ai/favicon.ico",

@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Qiye.Core;
+namespace Bingyu.Core;
 
 public sealed class StateStore(string directory)
 {

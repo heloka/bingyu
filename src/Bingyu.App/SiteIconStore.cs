@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using System.Windows.Media.Imaging;
 
-namespace Qiye;
+namespace Bingyu;
 
 internal static class SiteIconStore
 {

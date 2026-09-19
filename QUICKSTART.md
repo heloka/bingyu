@@ -5,6 +5,6 @@
 3. 如果程序提示缺少 WebView2 Runtime，安装微软的 [WebView2 Evergreen Runtime](https://developer.microsoft.com/microsoft-edge/webview2/#download-section) 后重试。轻量版若提示缺少 .NET，请安装 [.NET 10 Desktop Runtime（Windows x64）](https://dotnet.microsoft.com/download/dotnet/10.0)。
 4. 在各 AI 网站的网页里分别登录。新电脑不会自动带入旧电脑的网页登录状态。
 
-应用配置保存在 `%LOCALAPPDATA%\Qiye\`；这是改名前保留的数据目录，发布包不含任何人的账号、Cookie 或聊天内容。以后更新时，退出程序，解压新版覆盖程序文件即可，配置仍会保留。需要彻底退出时，右键系统托盘中的并语图标，选择「退出并语」。
+新安装的应用配置保存在 `%LOCALAPPDATA%\Bingyu\`。如果电脑上已有旧版 `%LOCALAPPDATA%\Qiye\` 数据，并语会继续使用它，保留登录状态。发布包不含任何人的账号、Cookie 或聊天内容。以后更新时，退出程序，解压新版覆盖程序文件即可。需要彻底退出时，右键系统托盘中的并语图标，选择「退出并语」。
 
 更多操作和快捷键见同目录的「使用说明.md」；在源码仓库中可查看 `README.md`。

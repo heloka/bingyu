@@ -1,4 +1,4 @@
-namespace Qiye.Core;
+namespace Bingyu.Core;
 
 // A tab owns its browser. Slots only select which browsers are visible.
 public sealed class Workspace

@@ -1,4 +1,4 @@
-namespace Qiye;
+namespace Bingyu;
 
 internal sealed class AddSiteWindow : Window
 {

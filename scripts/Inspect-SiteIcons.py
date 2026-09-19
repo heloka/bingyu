@@ -30,7 +30,7 @@ class Icons(HTMLParser):
 def inspect(item):
     site, url = item
     try:
-        request = Request(url, headers={"User-Agent": "Mozilla/5.0 QiyeIconInspection/1.0"})
+        request = Request(url, headers={"User-Agent": "Mozilla/5.0 BingyuIconInspection/1.0"})
         with urlopen(request, timeout=12) as response:
             data = response.read(2_000_000)
             parser = Icons()

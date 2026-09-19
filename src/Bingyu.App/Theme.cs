@@ -1,6 +1,6 @@
 using Microsoft.Win32;
 
-namespace Qiye;
+namespace Bingyu;
 
 internal static class Theme
 {

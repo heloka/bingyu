@@ -1,4 +1,4 @@
-using Qiye.Core;
+using Bingyu.Core;
 
 int passed = 0;
 int failed = 0;
@@ -78,7 +78,7 @@ Test("Corrupt workspace references are repaired without opening unsafe URLs", ()
     w.Slots = [a.Id, a.Id, Guid.NewGuid()]; w.FocusedSlot = 99; w.Repair();
     Check(w.Tabs.Count == 1 && w.Slots[1] == null && w.Slots[2] == null); Invariants(w);
 });
-string temp = Path.Combine(Path.GetTempPath(), "Qiye.Core.Tests-" + Guid.NewGuid().ToString("N"));
+string temp = Path.Combine(Path.GetTempPath(), "Bingyu.Core.Tests-" + Guid.NewGuid().ToString("N"));
 try
 {
     Test("Atomic settings save restores custom sites, tab display modes, and split proportions", () =>
@@ -119,7 +119,7 @@ finally
 {
     var resolved = Path.GetFullPath(temp);
     var allowed = Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-    if (resolved.StartsWith(allowed, StringComparison.OrdinalIgnoreCase) && Path.GetFileName(resolved).StartsWith("Qiye.Core.Tests-", StringComparison.Ordinal) && Directory.Exists(resolved))
+    if (resolved.StartsWith(allowed, StringComparison.OrdinalIgnoreCase) && Path.GetFileName(resolved).StartsWith("Bingyu.Core.Tests-", StringComparison.Ordinal) && Directory.Exists(resolved))
         Directory.Delete(resolved, true);
 }
 Test("Randomized tab operations maintain workspace invariants (10,000 operations)", () =>

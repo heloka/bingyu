@@ -1,0 +1,39 @@
+name: Build Windows release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: v0.1.10
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build light package
+        shell: pwsh
+        run: .\scripts\Build.ps1
+      - name: Build self-contained package
+        shell: pwsh
+        run: .\scripts\Build.ps1 -SelfContained
+      - name: Upload release assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $light = 'artifacts/release/Bingyu-win-x64.zip'
+          $standalone = 'artifacts/release/Bingyu-win-x64-self-contained.zip'
+          $checksums = 'artifacts/release/SHA256SUMS.txt'
+          $lightHash = (Get-FileHash -LiteralPath $light -Algorithm SHA256).Hash.ToLowerInvariant()
+          $standaloneHash = (Get-FileHash -LiteralPath $standalone -Algorithm SHA256).Hash.ToLowerInvariant()
+          [IO.File]::WriteAllLines((Join-Path $PWD $checksums), @(
+            "$lightHash  Bingyu-win-x64.zip"
+            "$standaloneHash  Bingyu-win-x64-self-contained.zip"
+          ))
+          gh release upload v0.1.10 $light $standalone $checksums --repo heloka/bingyu --clobber

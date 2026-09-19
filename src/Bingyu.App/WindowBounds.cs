@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
 
-namespace Qiye;
+namespace Bingyu;
 
 // WindowStyle=None needs an explicit work-area bound when maximized; otherwise
 // the web content and the native rail extend underneath the Windows taskbar.

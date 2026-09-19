@@ -1,7 +1,7 @@
 using System.Windows.Automation;
 using System.Windows.Media.Imaging;
 
-namespace Qiye;
+namespace Bingyu;
 
 internal static class Ui
 {

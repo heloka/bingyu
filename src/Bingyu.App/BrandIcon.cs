@@ -1,6 +1,6 @@
 using System.Windows.Shapes;
 
-namespace Qiye;
+namespace Bingyu;
 
 internal static class BrandIcon
 {

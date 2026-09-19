@@ -6,18 +6,18 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>Bingyu</AssemblyName>
-    <RootNamespace>Qiye</RootNamespace>
+    <RootNamespace>Bingyu</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.1.9</Version>
+    <Version>0.1.10</Version>
     <Product>并语</Product>
     <Title>并语 · AI 多屏工作台</Title>
     <Description>并语 · 轻量 AI 多屏工作台</Description>
-    <ApplicationIcon>Assets\Qiye.ico</ApplicationIcon>
+    <ApplicationIcon>Assets\Bingyu.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Qiye.Core\Qiye.Core.csproj" />
+    <ProjectReference Include="..\Bingyu.Core\Bingyu.Core.csproj" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4191.47" />
-    <Resource Include="Assets\Qiye.ico" />
+    <Resource Include="Assets\Bingyu.ico" />
     <Resource Include="Assets\Sites\*" />
   </ItemGroup>
 </Project>
