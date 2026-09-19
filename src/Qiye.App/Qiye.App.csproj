@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>Bingyu</AssemblyName>
+    <RootNamespace>Qiye</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>0.1.9</Version>
+    <Product>并语</Product>
+    <Title>并语 · AI 多屏工作台</Title>
+    <Description>并语 · 轻量 AI 多屏工作台</Description>
+    <ApplicationIcon>Assets\Qiye.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Qiye.Core\Qiye.Core.csproj" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4191.47" />
+    <Resource Include="Assets\Qiye.ico" />
+    <Resource Include="Assets\Sites\*" />
+  </ItemGroup>
+</Project>

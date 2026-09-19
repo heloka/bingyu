@@ -1,0 +1,16 @@
+global using System;
+global using System.Collections.Generic;
+global using System.IO;
+global using System.Linq;
+global using System.Threading.Tasks;
+global using System.Windows;
+global using System.Windows.Controls;
+global using System.Windows.Input;
+global using System.Windows.Media;
+global using Qiye.Core;
+global using Application = System.Windows.Application;
+global using Button = System.Windows.Controls.Button;
+global using TextBox = System.Windows.Controls.TextBox;
+global using MessageBox = System.Windows.MessageBox;
+global using Orientation = System.Windows.Controls.Orientation;
+global using HorizontalAlignment = System.Windows.HorizontalAlignment;
