@@ -71,7 +71,12 @@ internal sealed class MainWindow : Window
         PreviewKeyDown += (_, e) =>
         {
             var key = e.Key == Key.System ? e.SystemKey : e.Key;
-            if (IsAppShortcut(key, Keyboard.Modifiers)) { e.Handled = true; HandleShortcut(key, Keyboard.Modifiers); }
+            if (IsAppShortcut(key, Keyboard.Modifiers))
+            {
+                FocusPaneFromInput(e.OriginalSource as DependencyObject);
+                e.Handled = true;
+                HandleShortcut(key, Keyboard.Modifiers);
+            }
         };
         _saveTimer.Tick += (_, _) => { _saveTimer.Stop(); SaveNow(); };
         _statusTimer.Tick += (_, _) => { _statusTimer.Stop(); _status.Text = ""; };
@@ -294,6 +299,11 @@ internal sealed class MainWindow : Window
         int index = Workspace.Slots.IndexOf(id);
         if (index < 0 || Workspace.FocusedSlot == index) return;
         Workspace.SelectSlot(index); UpdatePaneBorders(); RefreshTabs(); ScheduleSave();
+    }
+    private void FocusPaneFromInput(DependencyObject? source)
+    {
+        for (var current = source; current is Visual visual; current = VisualTreeHelper.GetParent(visual))
+            if (current is BrowserTabView view) { FocusTabPane(view.Tab.Id); return; }
     }
     internal void ExpandTab(Guid id)
     {

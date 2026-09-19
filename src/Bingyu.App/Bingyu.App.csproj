@@ -8,7 +8,7 @@
     <AssemblyName>Bingyu</AssemblyName>
     <RootNamespace>Bingyu</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.1.10</Version>
+    <Version>0.1.11</Version>
     <Product>并语</Product>
     <Title>并语 · AI 多屏工作台</Title>
     <Description>并语 · 轻量 AI 多屏工作台</Description>

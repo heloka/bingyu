@@ -109,13 +109,17 @@ internal sealed class BrowserTabView : Grid, IDisposable
             var env = await _service.EnvironmentAsync();
             if (_disposed) return;
             _browser = new WebView2 { DefaultBackgroundColor = BrowserBackground() };
+            // WebView2 handles its own GotFocus event and does not bubble native
+            // webpage clicks through the parent WPF PreviewMouseDown handler.
+            _browser.AddHandler(GotFocusEvent,
+                new RoutedEventHandler((_, _) => _owner.FocusTabPane(Tab.Id)), true);
+            _browser.GotKeyboardFocus += (_, _) => _owner.FocusTabPane(Tab.Id);
             _body.Children.Add(_browser);
             await _browser.EnsureCoreWebView2Async(env);
             if (_disposed) return;
             var core = _browser.CoreWebView2;
             _service.Configure(core, _owner);
             ApplyZoom();
-            _browser.GotKeyboardFocus += (_, _) => _owner.FocusTabPane(Tab.Id);
             core.NavigationStarting += (_, _) => { if (!Tab.Zen) _progress.Visibility = Visibility.Visible; };
             core.NavigationCompleted += (_, e) =>
             {
