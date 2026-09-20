@@ -105,6 +105,64 @@ internal static class SmokeChecks
                 Assert((await b.Browser.ExecuteScriptAsync("localStorage.getItem('shared')")) == "\"yes\"", "Storage not shared");
                 Assert((await b.Browser.ExecuteScriptAsync("document.querySelector('input').value")) == "\"\"", "DOM state leaked between tabs");
             });
+            await Check("Visible splitter drags and resizes the live browser viewport", async () =>
+            {
+                var split = Descendants(window).OfType<Grid>().First(g => g.ColumnDefinitions.Count == 3 && g.Children.OfType<GridSplitter>().Any());
+                var handle = split.Children.OfType<GridSplitter>().Single();
+                Assert(handle.Cursor == Cursors.SizeWE && handle.ToolTip != null, "The drag affordance is missing");
+                var beforeWidth = split.ColumnDefinitions[0].ActualWidth;
+                var beforeCss = await window.Views[first!.Id].Browser!.ExecuteScriptAsync("window.innerWidth");
+                handle.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = System.Windows.Controls.Primitives.Thumb.DragStartedEvent });
+                handle.RaiseEvent(new DragDeltaEventArgs(90, 0) { RoutedEvent = System.Windows.Controls.Primitives.Thumb.DragDeltaEvent });
+                handle.RaiseEvent(new DragCompletedEventArgs(90, 0, false) { RoutedEvent = System.Windows.Controls.Primitives.Thumb.DragCompletedEvent });
+                await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                Assert(split.ColumnDefinitions[0].ActualWidth > beforeWidth + 45, "Splitter did not move");
+                Assert(window.State.Preferences.SplitRatios.TryGetValue("2", out var saved) && saved[0] > .53, "Moved ratio was not saved");
+                string afterCss = await window.Views[first.Id].Browser!.ExecuteScriptAsync("window.innerWidth");
+                var resizeClock = Stopwatch.StartNew();
+                while (int.Parse(afterCss) <= int.Parse(beforeCss) + 40 && resizeClock.Elapsed < TimeSpan.FromSeconds(5))
+                {
+                    await Task.Delay(100);
+                    afterCss = await window.Views[first.Id].Browser!.ExecuteScriptAsync("window.innerWidth");
+                }
+                Assert(int.Parse(afterCss) > int.Parse(beforeCss) + 40,
+                    $"Web content viewport did not resize; before={beforeCss}, after={afterCss}, gridBefore={beforeWidth}, gridAfter={split.ColumnDefinitions[0].ActualWidth}, browserWidth={window.Views[first.Id].Browser!.ActualWidth}");
+            });
+            await Check("A link context menu offers the external browser action", async () =>
+            {
+                var browser = window.Views[first!.Id].Browser!;
+                var core = browser.CoreWebView2;
+                bool seen = false;
+                bool hasAction = false;
+                string? target = null;
+                void OnMenu(object? _, CoreWebView2ContextMenuRequestedEventArgs e)
+                {
+                    seen = true;
+                    target = e.ContextMenuTarget.LinkUri;
+                    hasAction = e.MenuItems.Any(item => item.Label == "在默认浏览器中打开链接");
+                    e.Handled = true;
+                }
+                core.ContextMenuRequested += OnMenu;
+                try
+                {
+                    await ClickPageElement(browser, "#external-link", "right");
+                    await Wait(() => seen, "Link context menu");
+                    Assert(target == "https://example.com/" && hasAction, "The link menu lacks its external browser action");
+                }
+                finally { core.ContextMenuRequested -= OnMenu; }
+            });
+            await Check("Server and generated Markdown files download to disk", async () =>
+            {
+                var browser = window.Views[first!.Id].Browser!;
+                string directory = Path.Combine(App.DataDirectory, "smoke-downloads");
+                await browser.ExecuteScriptAsync("(() => { const a=document.createElement('a'); a.href='/download.md'; document.body.append(a); a.click(); a.remove(); })()");
+                string serverFile = Path.Combine(directory, "server.md");
+                await Wait(() => DownloadContains(serverFile, "# Server Markdown"), "Server Markdown download");
+                await browser.ExecuteScriptAsync("(() => { const blob=new Blob(['# Generated Markdown'],{type:'text/markdown'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.id='generated-download'; a.textContent='Download Markdown'; a.href=url; a.download='generated.md'; a.style.display='block'; document.body.prepend(a); setTimeout(()=>URL.revokeObjectURL(url),30000); })()");
+                await ClickPageElement(browser, "#generated-download", "left");
+                string generatedFile = Path.Combine(directory, "generated.md");
+                await Wait(() => DownloadContains(generatedFile, "# Generated Markdown"), "Generated Markdown download");
+            });
             await Check("Zen mode fills only its tab's pane without reloading either page", async () =>
             {
                 var a = window.Views[first!.Id]; var b = window.Views[second!.Id];
@@ -177,22 +235,6 @@ internal static class SmokeChecks
                 SiteIconStore.Reset("test");
                 Assert(!SiteIconStore.HasCustom("test") && SiteIconStore.Load("test") == null, "Icon reset failed");
                 return Task.CompletedTask;
-            });
-            await Check("Visible splitter drags and resizes the live browser viewport", async () =>
-            {
-                var split = Descendants(window).OfType<Grid>().First(g => g.ColumnDefinitions.Count == 3 && g.Children.OfType<GridSplitter>().Any());
-                var handle = split.Children.OfType<GridSplitter>().Single();
-                Assert(handle.Cursor == Cursors.SizeWE && handle.ToolTip != null, "The drag affordance is missing");
-                var beforeWidth = split.ColumnDefinitions[0].ActualWidth;
-                var beforeCss = await window.Views[first!.Id].Browser!.ExecuteScriptAsync("window.innerWidth");
-                handle.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = System.Windows.Controls.Primitives.Thumb.DragStartedEvent });
-                handle.RaiseEvent(new DragDeltaEventArgs(90, 0) { RoutedEvent = System.Windows.Controls.Primitives.Thumb.DragDeltaEvent });
-                handle.RaiseEvent(new DragCompletedEventArgs(90, 0, false) { RoutedEvent = System.Windows.Controls.Primitives.Thumb.DragCompletedEvent });
-                await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
-                Assert(split.ColumnDefinitions[0].ActualWidth > beforeWidth + 45, "Splitter did not move");
-                Assert(window.State.Preferences.SplitRatios.TryGetValue("2", out var saved) && saved[0] > .53, "Moved ratio was not saved");
-                string afterCss = await window.Views[first.Id].Browser!.ExecuteScriptAsync("window.innerWidth");
-                Assert(int.Parse(afterCss) > int.Parse(beforeCss) + 40, "Web content viewport did not resize");
             });
             await Check("Changing layouts retains live DOM state", async () =>
             {
@@ -322,6 +364,22 @@ internal static class SmokeChecks
             await Task.Delay(100);
         }
     }
+    private static bool DownloadContains(string path, string expected)
+    {
+        try { return File.Exists(path) && File.ReadAllText(path).Contains(expected, StringComparison.Ordinal); }
+        catch (IOException) { return false; }
+    }
+    private static async Task ClickPageElement(Microsoft.Web.WebView2.Wpf.WebView2 browser, string selector, string button)
+    {
+        string escaped = JsonSerializer.Serialize(selector);
+        double x = JsonSerializer.Deserialize<double>(await browser.ExecuteScriptAsync($"document.querySelector({escaped}).getBoundingClientRect().left+5"));
+        double y = JsonSerializer.Deserialize<double>(await browser.ExecuteScriptAsync($"document.querySelector({escaped}).getBoundingClientRect().top+5"));
+        var core = browser.CoreWebView2;
+        await core.CallDevToolsProtocolMethodAsync("Input.dispatchMouseEvent",
+            JsonSerializer.Serialize(new { type = "mousePressed", x, y, button, clickCount = 1 }));
+        await core.CallDevToolsProtocolMethodAsync("Input.dispatchMouseEvent",
+            JsonSerializer.Serialize(new { type = "mouseReleased", x, y, button, clickCount = 1 }));
+    }
     private static async Task Snapshot(Window window, string path)
     {
         await Dispatcher.Yield(DispatcherPriority.ApplicationIdle); window.UpdateLayout();
@@ -369,11 +427,20 @@ internal static class SmokeChecks
                 try
                 {
                     using var stream = client.GetStream(); using var reader = new StreamReader(stream, Encoding.ASCII, leaveOpen: true);
-                    var line = await reader.ReadLineAsync(); bool popup = line?.Contains("/popup", StringComparison.Ordinal) == true;
+                    var line = await reader.ReadLineAsync();
+                    bool popup = line?.Contains("/popup", StringComparison.Ordinal) == true;
+                    bool download = line?.Contains("/download.md", StringComparison.Ordinal) == true;
                     while (!string.IsNullOrEmpty(await reader.ReadLineAsync())) { }
+                    if (download)
+                    {
+                        byte[] markdown = Encoding.UTF8.GetBytes("# Server Markdown\n");
+                        byte[] downloadHeader = Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\nContent-Type: text/markdown; charset=utf-8\r\nContent-Disposition: attachment; filename=\"server.md\"\r\nContent-Length: {markdown.Length}\r\nConnection: close\r\n\r\n");
+                        await stream.WriteAsync(downloadHeader); await stream.WriteAsync(markdown);
+                        return;
+                    }
                     string html = popup
                         ? "<title>Fixture popup</title><script>window.opener.postMessage(document.cookie,'*'); setTimeout(()=>window.close(),200);</script>Popup fixture"
-                        : "<!doctype html><meta charset='utf-8'><title>Bingyu fixture</title><style>body{font:20px system-ui;padding:50px;background:#f6f5f2;color:#272b2a}input{padding:14px;border:1px solid #bbb}</style><h1>Bingyu integration fixture</h1><p>This local page tests independent DOM state and shared storage.</p><input aria-label='Independent page state'>";
+                        : "<!doctype html><meta charset='utf-8'><title>Bingyu fixture</title><style>body{font:20px system-ui;padding:50px;background:#f6f5f2;color:#272b2a}input{padding:14px;border:1px solid #bbb}</style><h1>Bingyu integration fixture</h1><p>This local page tests independent DOM state and shared storage.</p><a id='external-link' href='https://example.com/'>External link</a><input aria-label='Independent page state'>";
                     byte[] body = Encoding.UTF8.GetBytes(html);
                     byte[] header = Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {body.Length}\r\nConnection: close\r\n\r\n");
                     await stream.WriteAsync(header); await stream.WriteAsync(body);

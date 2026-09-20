@@ -1,5 +1,6 @@
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
+using Microsoft.Win32;
 using System.Windows.Threading;
 
 namespace Bingyu;
@@ -27,6 +28,23 @@ internal sealed class BrowserService
             if (e.Uri != "about:blank" && !UrlPolicy.TryNormalize(e.Uri, out _)) e.Cancel = true;
         };
         core.NewWindowRequested += (_, e) => OpenPopup(e, owner);
+        var openLinkItem = core.Environment.CreateContextMenuItem(
+            "在默认浏览器中打开链接", null!, CoreWebView2ContextMenuItemKind.Command);
+        string? contextLink = null;
+        openLinkItem.CustomItemSelected += (_, _) =>
+        {
+            string? url = contextLink;
+            if (url != null) owner.Dispatcher.BeginInvoke(() => Ui.OpenExternal(url));
+        };
+        core.ContextMenuRequested += (_, e) =>
+        {
+            contextLink = null;
+            if (!e.ContextMenuTarget.HasLinkUri ||
+                !UrlPolicy.TryNormalize(e.ContextMenuTarget.LinkUri, out var link)) return;
+            contextLink = link;
+            e.MenuItems.Insert(0, openLinkItem);
+        };
+        core.DownloadStarting += (_, e) => SaveDownload(e, owner);
         core.PermissionRequested += async (_, e) =>
         {
             if (e.PermissionKind == CoreWebView2PermissionKind.Notifications)
@@ -45,6 +63,61 @@ internal sealed class BrowserService
             }
             catch { e.State = CoreWebView2PermissionState.Deny; }
         };
+    }
+
+    private static void SaveDownload(CoreWebView2DownloadStartingEventArgs e, Window owner)
+    {
+        try
+        {
+            string name = Path.GetFileName(e.ResultFilePath);
+            if (string.IsNullOrWhiteSpace(name)) name = "下载文件";
+            string path;
+            if (App.SmokeTest)
+            {
+                string directory = Path.Combine(App.DataDirectory, "smoke-downloads");
+                Directory.CreateDirectory(directory);
+                path = Path.Combine(directory, name);
+            }
+            else
+            {
+                string downloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+                string? suggestedDirectory = Path.GetDirectoryName(e.ResultFilePath);
+                var dialog = new SaveFileDialog
+                {
+                    Title = "保存网页下载 · 并语",
+                    FileName = name,
+                    InitialDirectory = suggestedDirectory != null && Directory.Exists(suggestedDirectory) ? suggestedDirectory : downloads,
+                    Filter = "所有文件 (*.*)|*.*",
+                    AddExtension = false,
+                    OverwritePrompt = true
+                };
+                if (dialog.ShowDialog(owner) != true) { e.Cancel = true; return; }
+                path = dialog.FileName;
+            }
+            e.ResultFilePath = path;
+            e.Handled = true;
+            var mainWindow = owner as MainWindow ?? owner.Owner as MainWindow;
+            mainWindow?.SetStatus("正在下载：" + name);
+            var download = e.DownloadOperation;
+            download.StateChanged += (_, _) =>
+            {
+                if (owner.Dispatcher.HasShutdownStarted) return;
+                owner.Dispatcher.BeginInvoke(() =>
+                {
+                    if (download.State == CoreWebView2DownloadState.Completed)
+                        mainWindow?.SetStatus("已保存下载：" + Path.GetFileName(download.ResultFilePath));
+                    else if (download.State == CoreWebView2DownloadState.Interrupted &&
+                             download.InterruptReason != CoreWebView2DownloadInterruptReason.UserCanceled)
+                        mainWindow?.SetStatus("下载未完成：" + download.InterruptReason);
+                });
+            };
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or System.Runtime.InteropServices.COMException)
+        {
+            e.Cancel = true;
+            App.Log(ex);
+            if (!App.SmokeTest) MessageBox.Show(owner, "无法保存下载文件，请检查保存位置后重试。", "并语");
+        }
     }
 
     private static string PermissionName(CoreWebView2PermissionKind kind) => kind switch

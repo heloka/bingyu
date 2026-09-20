@@ -1,9 +1,9 @@
-# 并语 0.1.11 · 验证记录
+# 并语 0.1.12 · 验证记录
 
 验证环境：Windows 11 x64；轻量版使用已安装的 .NET 10 Desktop Runtime 与 Microsoft Edge WebView2 Runtime。发布版另提供自带 .NET 的 Windows x64 包，两种包都不捆绑 WebView2。
 
 - `dotnet run --project tests/Bingyu.Core.Tests -c Release`：16 项通过，包括 10,000 次随机标签与分屏操作。
-- `scripts/Test-Desktop.ps1`：19 项通过。分别用轻量版、自带 .NET 版的发布程序运行过；检查原生首页、2/3/4 分屏、WebView2 加载、共享 Cookie、独立 DOM、通知权限、专注模式与最大化边界、拖动分屏、暂停恢复、弹窗、热键和配置持久化。
+- `scripts/Test-Desktop.ps1`：21 项通过。检查原生首页、2/3/4 分屏、WebView2 加载、共享 Cookie、独立 DOM、通知权限、专注模式与最大化边界、拖动分屏、链接右键菜单、服务器附件与网页生成的 Markdown 下载、暂停恢复、弹窗、热键和配置持久化。
 - 工程、命名空间、图标资源和构建脚本统一为 Bingyu；新装使用新的数据目录，已有旧版数据继续沿用。
 - 分屏网页焦点切换使用 WebView2 转发的焦点事件，并在快捷键处理时按事件来源校正目标屏。隐藏运行的桌面检查无法向被其他窗口遮挡的网页发送真实鼠标点击，因此这项交互仍需在正常可见窗口中人工复核。
 
