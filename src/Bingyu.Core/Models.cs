@@ -31,6 +31,7 @@ public sealed class Preferences
     public string Hotkey { get; set; } = "Alt+Space";
     public bool CloseToTray { get; set; } = true;
     public bool RestoreSession { get; set; } = true;
+    public bool MemorySaver { get; set; } = true;
     public bool HideTopBars { get; set; }
     public double Width { get; set; } = 1360;
     public double Height { get; set; } = 900;

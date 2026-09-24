@@ -64,8 +64,10 @@ internal sealed class SettingsWindow : Window
         var shortcutHint = Ui.Text("点击输入框按下组合键，或输入 Ctrl+Shift+Q。\n如果已被其他程序占用，保存时会提示。", 11, "Muted"); shortcutHint.Margin = new Thickness(0, 9, 0, 18); stack.Children.Add(shortcutHint);
         var close = new CheckBox { Content = "关闭窗口后留在系统托盘", IsChecked = prefs.CloseToTray }; stack.Children.Add(close);
         var restore = new CheckBox { Content = "启动时恢复页面与分屏布局", IsChecked = prefs.RestoreSession }; stack.Children.Add(restore);
-        var restoreHint = Ui.Text("后台标签按需加载。已打开的页面保持运行，可手动休眠。", 11, "Muted"); restoreHint.Margin = new Thickness(0, 8, 0, 22); stack.Children.Add(restoreHint); stack.Children.Add(Ui.Line());
-        var version = Ui.Text("并语 BINGYU  0.1.9", 12); version.FontWeight = FontWeights.SemiBold; version.Margin = new Thickness(0, 20, 0, 8); stack.Children.Add(version);
+        var memory = new CheckBox { Content = "自动释放后台标签，降低内存占用", IsChecked = prefs.MemorySaver, Margin = new Thickness(0, 10, 0, 0) }; stack.Children.Add(memory);
+        var restoreHint = Ui.Text("隐藏的网页会立即暂停，持续隐藏 60 秒后释放；再次切回会重新载入当前网址并保留登录状态。网页中尚未提交的文字可能丢失。", 11, "Muted"); restoreHint.TextWrapping = TextWrapping.Wrap; restoreHint.Margin = new Thickness(0, 8, 0, 22); stack.Children.Add(restoreHint); stack.Children.Add(Ui.Line());
+        var appVersion = typeof(SettingsWindow).Assembly.GetName().Version;
+        var version = Ui.Text($"并语 BINGYU  {appVersion?.Major}.{appVersion?.Minor}.{appVersion?.Build}", 12); version.FontWeight = FontWeights.SemiBold; version.Margin = new Thickness(0, 20, 0, 8); stack.Children.Add(version);
         var about = Ui.Text("使用系统 WebView2。无需 API Key，直接登录官方网站。\n各网站可用性、登录方式和订阅权限由对应平台决定。\n默认浏览器拥有独立的登录状态。", 11, "Muted"); about.TextWrapping = TextWrapping.Wrap; stack.Children.Add(about);
         var error = Ui.Text("", 12); error.TextWrapping = TextWrapping.Wrap; error.Foreground = Theme.Brush("#C26953"); error.Margin = new Thickness(0, 15, 0, 10); stack.Children.Add(error);
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
@@ -76,7 +78,7 @@ internal sealed class SettingsWindow : Window
             string? problem = registerHotkey(normalized);
             if (problem != null) { error.Text = problem; return; }
             prefs.Hotkey = normalized; prefs.Theme = radios.FirstOrDefault(r => r.Value.IsChecked == true).Key ?? "System";
-            prefs.CloseToTray = close.IsChecked == true; prefs.RestoreSession = restore.IsChecked == true;
+            prefs.CloseToTray = close.IsChecked == true; prefs.RestoreSession = restore.IsChecked == true; prefs.MemorySaver = memory.IsChecked == true;
             DialogResult = true;
         });
         Ui.Background(save, "AccentSoft"); save.Margin = new Thickness(10, 0, 0, 0); buttons.Children.Add(save); stack.Children.Add(buttons);

@@ -28,6 +28,7 @@ internal sealed class MainWindow : Window
     private Button _topBarToggle = null!;
     private readonly DispatcherTimer _saveTimer = new() { Interval = TimeSpan.FromMilliseconds(600) };
     private readonly DispatcherTimer _statusTimer = new() { Interval = TimeSpan.FromSeconds(6) };
+    private readonly DispatcherTimer _memoryTimer = new() { Interval = TimeSpan.FromSeconds(15) };
     private readonly HotkeyService _hotkey;
     private Forms.NotifyIcon? _tray;
     private System.Drawing.Icon? _trayIcon;
@@ -80,6 +81,8 @@ internal sealed class MainWindow : Window
         };
         _saveTimer.Tick += (_, _) => { _saveTimer.Stop(); SaveNow(); };
         _statusTimer.Tick += (_, _) => { _statusTimer.Stop(); _status.Text = ""; };
+        _memoryTimer.Tick += (_, _) => ReleaseHiddenBrowsers(TimeSpan.FromSeconds(60));
+        _memoryTimer.Start();
         _themeChanged = (_, e) =>
         {
             if (e.Category is UserPreferenceCategory.General or UserPreferenceCategory.Color)
@@ -90,7 +93,7 @@ internal sealed class MainWindow : Window
         Closed += (_, _) =>
         {
             SystemEvents.UserPreferenceChanged -= _themeChanged;
-            _saveTimer.Stop(); _statusTimer.Stop();
+            _saveTimer.Stop(); _statusTimer.Stop(); _memoryTimer.Stop();
             _hotkey.Dispose(); Browsers.ClosePopups();
             foreach (var view in Views.Values) view.Dispose();
             _tray?.Dispose(); _trayIcon?.Dispose();
@@ -381,8 +384,28 @@ internal sealed class MainWindow : Window
             else if (Workspace.Slots.Count == 3) _main.Children.Add(Split("3", true, BuildPane(0), Split("3r", false, BuildPane(1), BuildPane(2))));
             else _main.Children.Add(Split("4", false, Split("4t", true, BuildPane(0), BuildPane(1)), Split("4b", true, BuildPane(2), BuildPane(3))));
             UpdatePaneBorders(); RefreshTabs();
+            UpdateBrowserLifetimes();
         }
         finally { _rendering = false; }
+    }
+    private HashSet<Guid> VisibleTabIds()
+    {
+        if (!IsVisible || _homeVisible) return [];
+        if (Workspace.ExpandedSlot is int expanded)
+            return Workspace.Slots[expanded] is Guid id ? [id] : [];
+        return Workspace.Slots.OfType<Guid>().ToHashSet();
+    }
+    private void UpdateBrowserLifetimes()
+    {
+        var visible = VisibleTabIds();
+        foreach (var (id, view) in Views) view.SetWorkspaceVisible(visible.Contains(id), Prefs.MemorySaver);
+    }
+    internal int ReleaseHiddenBrowsers(TimeSpan age)
+    {
+        if (!Prefs.MemorySaver) return 0;
+        int released = Views.Values.Count(view => view.ReleaseIfHiddenFor(age));
+        if (released > 0) SetStatus($"已释放 {released} 个后台网页以节省内存");
+        return released;
     }
 
     private UIElement Split(string key, bool horizontal, UIElement first, UIElement second)
@@ -541,16 +564,16 @@ internal sealed class MainWindow : Window
     private void OpenSettings()
     {
         var dialog = new SettingsWindow(Prefs, (shortcut) => _hotkey.Register(shortcut, out var error) ? null : error) { Owner = this };
-        if (dialog.ShowDialog() == true) { ApplyTheme(); ScheduleSave(); SetStatus("设置已保存"); }
+        if (dialog.ShowDialog() == true) { ApplyTheme(); UpdateBrowserLifetimes(); ScheduleSave(); SetStatus("设置已保存"); }
     }
     private void ApplyTheme() { Theme.Apply(Prefs.Theme); foreach (var view in Views.Values) view.UpdateTheme(); if (_homeVisible) RenderWorkspace(); }
     private void ToggleMaximize() => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
     internal void ToggleVisibility()
     {
-        if (IsVisible && WindowState != WindowState.Minimized) { Browsers.HidePopups(); Hide(); SaveNow(); }
+        if (IsVisible && WindowState != WindowState.Minimized) { Browsers.HidePopups(); Hide(); UpdateBrowserLifetimes(); SaveNow(); }
         else RestoreWindow();
     }
-    internal void RestoreWindow() { Show(); if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal; Activate(); Browsers.ShowPopups(); }
+    internal void RestoreWindow() { Show(); if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal; Activate(); UpdateBrowserLifetimes(); Browsers.ShowPopups(); }
     private void CreateTray()
     {
         var resource = Application.GetResourceStream(new Uri("pack://application:,,,/Assets/Bingyu.ico"));

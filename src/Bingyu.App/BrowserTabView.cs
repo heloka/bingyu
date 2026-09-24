@@ -20,6 +20,9 @@ internal sealed class BrowserTabView : Grid, IDisposable
     private Task? _initializing;
     private bool _disposed;
     private bool _suspended;
+    private bool _backgroundSuspended;
+    private bool _backgroundTransition;
+    private DateTimeOffset? _hiddenSince;
     public TabState Tab { get; }
     public WebView2? Browser => _browser;
     public bool Ready => _browser?.CoreWebView2 != null;
@@ -205,6 +208,57 @@ internal sealed class BrowserTabView : Grid, IDisposable
         if (_browser != null) _browser.Visibility = Visibility.Visible;
         await EnsureLoadedAsync();
         _owner.RefreshTabs(); _owner.ScheduleSave();
+    }
+    internal void SetWorkspaceVisible(bool visible, bool memorySaver)
+    {
+        if (_disposed) return;
+        if (visible)
+        {
+            _hiddenSince = null;
+            ResumeFromBackground();
+            if (!Tab.Sleeping && !Ready) _ = EnsureLoadedAsync();
+            return;
+        }
+        if (!memorySaver || Tab.Sleeping)
+        {
+            _hiddenSince = null;
+            if (!memorySaver) ResumeFromBackground();
+            return;
+        }
+        _hiddenSince ??= DateTimeOffset.UtcNow;
+        if (Ready && !_backgroundSuspended && !_backgroundTransition) _ = SuspendInBackgroundAsync();
+    }
+    private async Task SuspendInBackgroundAsync()
+    {
+        if (!Ready || _disposed || Tab.Sleeping || _hiddenSince == null) return;
+        _backgroundTransition = true;
+        try
+        {
+            _backgroundSuspended = await _browser!.CoreWebView2.TrySuspendAsync();
+            // The user may have returned to this tab while WebView2 was still
+            // completing its asynchronous suspension.
+            if (_hiddenSince == null) ResumeFromBackground();
+        }
+        catch (Exception ex) { App.Log(ex); }
+        finally { _backgroundTransition = false; }
+    }
+    private void ResumeFromBackground()
+    {
+        if (!_backgroundSuspended || !Ready) return;
+        try { _browser!.CoreWebView2.Resume(); }
+        catch (Exception ex) { App.Log(ex); }
+        _backgroundSuspended = false;
+    }
+    internal bool ReleaseIfHiddenFor(TimeSpan age)
+    {
+        if (_disposed || Tab.Sleeping || _hiddenSince == null ||
+            DateTimeOffset.UtcNow - _hiddenSince < age || _initializing != null ||
+            _backgroundTransition || _browser == null) return false;
+        _body.Children.Remove(_browser);
+        _browser.Dispose();
+        _browser = null;
+        _backgroundSuspended = false;
+        return true;
     }
     public void FocusAddress()
     {

@@ -81,15 +81,16 @@ Test("Corrupt workspace references are repaired without opening unsafe URLs", ()
 string temp = Path.Combine(Path.GetTempPath(), "Bingyu.Core.Tests-" + Guid.NewGuid().ToString("N"));
 try
 {
-    Test("Atomic settings save restores custom sites, tab display modes, and split proportions", () =>
+    Test("Atomic settings save restores custom sites, memory mode, tab display modes, and split proportions", () =>
     {
         var store = new StateStore(temp); var state = new SavedState();
         var tab = state.Workspace.Open(sites[0]); tab.Sleeping = true; tab.Zen = true; tab.ZoomFactor = .9; state.Workspace.SetLayout(3);
         state.Preferences.HideTopBars = true;
+        state.Preferences.MemorySaver = false;
         state.Preferences.SplitRatios["3"] = [.4, .6];
         state.Preferences.Sites.Add(new("custom-1", "Example", "https://example.com", "E", "#888888", "test"));
         store.Save(state); var loaded = store.Load();
-        Check(loaded.Workspace.Tabs[0].Sleeping && loaded.Workspace.Tabs[0].Zen && loaded.Workspace.Tabs[0].ZoomFactor == .9 && loaded.Preferences.HideTopBars && loaded.Workspace.Slots.Count == 3 && loaded.Preferences.Sites.Count == 8);
+        Check(loaded.Workspace.Tabs[0].Sleeping && loaded.Workspace.Tabs[0].Zen && loaded.Workspace.Tabs[0].ZoomFactor == .9 && loaded.Preferences.HideTopBars && !loaded.Preferences.MemorySaver && loaded.Workspace.Slots.Count == 3 && loaded.Preferences.Sites.Count == 8);
         Check(loaded.Preferences.SplitRatios["3"][0] == .4);
     });
     Test("A damaged primary settings file recovers the last good backup", () =>

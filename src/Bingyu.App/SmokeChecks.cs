@@ -292,6 +292,27 @@ internal static class SmokeChecks
                 window.CloseTab(second!.Id); Assert(!window.Views.ContainsKey(second.Id) && window.Views[first!.Id].Ready, "Incorrect browser disposed");
                 return Task.CompletedTask;
             });
+            await Check("Memory saver releases a hidden browser and restores its signed-in profile", async () =>
+            {
+                Assert(first != null && window.State.Preferences.MemorySaver, "Memory saver should be enabled by default");
+                window.SetLayout(1);
+                window.Workspace.FocusTab(first!.Id);
+                window.RenderWorkspace();
+                await Wait(() => window.Views[first.Id].Ready, "Visible fixture before memory release");
+                window.OpenSite(site, true);
+                var temporary = window.Workspace.ActiveTab!;
+                await Wait(() => window.Views[temporary.Id].Ready, "Temporary foreground browser");
+                await Wait(() =>
+                {
+                    window.ReleaseHiddenBrowsers(TimeSpan.Zero);
+                    return window.Views[first.Id].Browser == null;
+                }, "Hidden browser release");
+                window.Workspace.FocusTab(first.Id);
+                window.RenderWorkspace();
+                await Wait(() => window.Views[first.Id].Ready, "Released browser recreation");
+                await WaitScript(window.Views[first.Id], "document.cookie", "bingyuShared=works");
+                window.CloseTab(temporary.Id);
+            });
             await Check("Fixed Gemini zoom survives split changes and session restore", async () =>
             {
                 window.SetLayout(2); window.Workspace.SelectSlot(1);
